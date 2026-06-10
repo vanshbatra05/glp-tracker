@@ -117,41 +117,45 @@ export default function Home() {
     setLogs(data || [])
   }
   async function saveLog() {
-    if (!weight) {
-      alert('Please enter weight')
-      return
-    }
-
-    setLoading(true)
-
-    const { error } = await supabase
-      .from('daily_logs')
-      .insert({
-        weight: Number(weight),
-        water: Number(water || 0),
-        steps: Number(steps || 0),
-        protein: Number(protein || 0),
-        calories: Number(calories || 0),
-      })
-
-    setLoading(false)
-
-    if (error) {
-      alert(error.message)
-      console.error(error)
-      return
-    }
-
-    alert('Saved Successfully ✅')
-
-    setWeight('')
-    setWater('')
-    setSteps('')
-    setProtein('')
-    setCalories('')
-
-    fetchLogs()
+  if (!weight) {
+    alert('Please enter weight')
+    return
   }
+
+  setLoading(true)
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  const { error } = await supabase
+    .from('daily_logs')
+    .insert({
+      user_id: user?.id,
+      weight: Number(weight),
+      water: Number(water || 0),
+      steps: Number(steps || 0),
+      protein: Number(protein || 0),
+      calories: Number(calories || 0),
+    })
+
+  setLoading(false)
+
+  if (error) {
+    alert(error.message)
+    return
+  }
+
+  alert('Saved Successfully ✅')
+
+  setWeight('')
+  setWater('')
+  setSteps('')
+  setProtein('')
+  setCalories('')
+
+  fetchLogs()
+}
 
   async function signInWithGoogle() {
   await supabase.auth.signInWithOAuth({
@@ -174,9 +178,14 @@ export default function Home() {
 }
 
   async function saveInjection() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
   const { error } = await supabase
     .from('injections')
     .insert({
+      user_id: user?.id,
       medication,
       dose,
       injection_date: injectionDate,
