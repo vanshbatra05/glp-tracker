@@ -161,66 +161,150 @@ export default function Home() {
       </div>
 
       <div className="mt-10 bg-gray-900 rounded-2xl p-6">
-        <h2 className="text-2xl font-bold mb-6">
-          History
-        </h2>
 
-        {logs.length === 0 ? (
-          <p className="text-gray-400">
-            No Logs Yet
-          </p>
-        ) : (
-          <div className="overflow-x-auto">
+  <h2 className="text-2xl font-bold mb-6">
 
-            <table className="w-full">
+    History
 
-              <thead>
-                <tr className="border-b border-gray-700">
-                  <th className="text-left py-3">Date</th>
-                  <th className="text-left py-3">Weight</th>
-                  <th className="text-left py-3">Water</th>
-                  <th className="text-left py-3">Steps</th>
-                  <th className="text-left py-3">Protein</th>
-                  <th className="text-left py-3">Calories</th>
-                  <th className="text-left py-3">Action</th>
-                </tr>
-              </thead>
+  </h2>
 
-              <tbody>
-                {logs.map((log) => (
-                  <tr
-                    key={log.id}
-                    className="border-b border-gray-800"
-                  >
-                    <td>
-                      {new Date(
-                        log.created_at
-                      ).toLocaleDateString()}
-                    </td>
+  {logs.length === 0 ? (
 
-                    <td>{log.weight}</td>
-                    <td>{log.water}</td>
-                    <td>{log.steps}</td>
-                    <td>{log.protein}</td>
-                    <td>{log.calories}</td>
+    <p className="text-gray-400">
 
-                    <td>
-                      <button
-                        onClick={() => deleteLog(log.id)}
-                        className="bg-red-600 px-3 py-1 rounded"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
+      No Logs Yet
 
-            </table>
+    </p>
+
+  ) : (
+
+    <div className="space-y-4">
+
+      {logs.map((log) => (
+
+        <div
+
+          key={log.id}
+
+          className="bg-gray-800 rounded-xl p-4"
+
+        >
+
+          <div className="flex justify-between items-center mb-4">
+
+            <h3 className="font-semibold">
+
+              📅 {new Date(log.created_at).toLocaleDateString()}
+
+            </h3>
+
+            <button
+
+              onClick={() => deleteLog(log.id)}
+
+              className="bg-red-600 px-3 py-1 rounded text-sm"
+
+            >
+
+              Delete
+
+            </button>
 
           </div>
-        )}
-      </div>
+
+          <div className="grid grid-cols-2 gap-3">
+
+            <div>
+
+              <p className="text-gray-400 text-sm">
+
+                Weight
+
+              </p>
+
+              <p className="font-bold">
+
+                ⚖️ {log.weight} kg
+
+              </p>
+
+            </div>
+
+            <div>
+
+              <p className="text-gray-400 text-sm">
+
+                Water
+
+              </p>
+
+              <p className="font-bold">
+
+                💧 {log.water} L
+
+              </p>
+
+            </div>
+
+            <div>
+
+              <p className="text-gray-400 text-sm">
+
+                Steps
+
+              </p>
+
+              <p className="font-bold">
+
+                🚶 {log.steps}
+
+              </p>
+
+            </div>
+
+            <div>
+
+              <p className="text-gray-400 text-sm">
+
+                Protein
+
+              </p>
+
+              <p className="font-bold">
+
+                🥩 {log.protein} g
+
+              </p>
+
+            </div>
+
+            <div className="col-span-2">
+
+              <p className="text-gray-400 text-sm">
+
+                Calories
+
+              </p>
+
+              <p className="font-bold">
+
+                🔥 {log.calories} kcal
+
+              </p>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      ))}
+
+    </div>
+
+  )}
+
+</div>
     </main>
   )
 }
