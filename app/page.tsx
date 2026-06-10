@@ -64,6 +64,21 @@ export default function Home() {
 
   const [lastInjection, setLastInjection] = useState<any>(null)
 
+  const daysSinceInjection = lastInjection
+  ? Math.floor(
+      (Date.now() -
+        new Date(lastInjection.injection_date).getTime()) /
+        (1000 * 60 * 60 * 24)
+    )
+  : 0
+
+  const nextInjectionDate = lastInjection
+  ? new Date(
+      new Date(lastInjection.injection_date).getTime() +
+        7 * 24 * 60 * 60 * 1000
+    ).toLocaleDateString()
+  : '--'
+
   const chartData = [...logs]
     .reverse()
     .map((log) => ({
@@ -77,6 +92,8 @@ export default function Home() {
   fetchLogs()
   fetchLastInjection()
 }, [])
+
+  
 
   async function fetchLogs() {
     const { data, error } = await supabase
@@ -347,6 +364,19 @@ export default function Home() {
 
     <p>
       Date: {lastInjection.injection_date}
+    </p>
+    <p>
+      ⏳ Days Since: {daysSinceInjection}
+    </p>
+
+    <p
+      className={
+        daysSinceInjection >= 7
+          ?  'text-red-400 font-bold'
+          : ''
+      }
+>
+      📅 Next Due: {nextInjectionDate}
     </p>
   </div>
 )}
