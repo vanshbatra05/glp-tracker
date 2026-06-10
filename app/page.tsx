@@ -55,6 +55,8 @@ export default function Home() {
 
   const totalLogs = logs.length
 
+  const [user, setUser] = useState<any>(null)
+
   const [medication, setMedication] = useState('Mounjaro')
   const [customMedication, setCustomMedication] = useState('')
   const [dose, setDose] = useState('5 mg')
@@ -91,6 +93,10 @@ export default function Home() {
   useEffect(() => {
   fetchLogs()
   fetchLastInjection()
+
+  supabase.auth.getUser().then(({ data }) => {
+    setUser(data.user)
+  })
 }, [])
 
   
@@ -147,6 +153,12 @@ export default function Home() {
     fetchLogs()
   }
 
+  async function signInWithGoogle() {
+  await supabase.auth.signInWithOAuth({
+    provider: 'google',
+  })
+}
+
   async function fetchLastInjection() {
   const { data } = await supabase
     .from('injections')
@@ -194,8 +206,40 @@ export default function Home() {
     fetchLogs()
   }
 
+  async function logout() {
+  await supabase.auth.signOut()
+  location.reload()
+  }
+
   return (
     <main className="min-h-screen bg-gray-950 text-white p-8">
+      {user && (
+
+      <p className="mt-2 text-green-400">
+
+        Logged in as {user.email}
+
+      </p>
+
+)}
+      
+      <button
+      onClick={signInWithGoogle}
+      className="mt-4 bg-red-600 px-4 py-2 rounded-lg"
+    >
+  Continue with Google
+</button>
+      <button
+
+  onClick={logout}
+
+  className="mt-4 bg-gray-700 hover:bg-gray-800 px-4 py-2 rounded-lg"
+
+>
+
+  Logout
+
+</button>
       <h1 className="text-6xl font-bold">
         GLP Tracker
       </h1>
@@ -591,6 +635,14 @@ export default function Home() {
   )}
   
 </div>
+{user && (
+  <button
+    onClick={logout}
+    className="ml-4 bg-gray-700 px-4 py-2 rounded-lg"
+  >
+    Logout
+  </button>
+)}
     </main>
   )
 }
