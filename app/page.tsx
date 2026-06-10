@@ -2,6 +2,14 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 interface DailyLog {
   id: string
@@ -22,6 +30,13 @@ export default function Home() {
 
   const [logs, setLogs] = useState<DailyLog[]>([])
   const [loading, setLoading] = useState(false)
+
+  const chartData = [...logs]
+    .reverse()
+    .map((log) => ({
+      date: new Date(log.created_at).toLocaleDateString(),
+      weight: log.weight,
+    }))
 
   useEffect(() => {
     fetchLogs()
@@ -102,6 +117,73 @@ export default function Home() {
         AI Powered GLP-1 Tracker
       </p>
 
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
+
+  <div className="bg-gray-900 p-5 rounded-2xl">
+    <p className="text-gray-400 text-sm">
+      Current Weight
+    </p>
+
+    <h3 className="text-3xl font-bold text-green-400">
+      {logs.length > 0 ? logs[0].weight : '--'} kg
+    </h3>
+  </div>
+
+  <div className="bg-gray-900 p-5 rounded-2xl">
+    <p className="text-gray-400 text-sm">
+      Goal Weight
+    </p>
+
+    <h3 className="text-3xl font-bold text-blue-400">
+      80 kg
+    </h3>
+  </div>
+
+  <div className="bg-gray-900 p-5 rounded-2xl">
+    <p className="text-gray-400 text-sm">
+      Remaining
+    </p>
+
+    <h3 className="text-3xl font-bold text-yellow-400">
+      {logs.length > 0 ? (logs[0].weight - 80).toFixed(1) : '--'} kg
+    </h3>
+  </div>
+
+  <div className="bg-gray-900 p-5 rounded-2xl">
+    <p className="text-gray-400 text-sm">
+      Total Logs
+    </p>
+
+    <h3 className="text-3xl font-bold text-purple-400">
+      {logs.length}
+    </h3>
+  </div>
+
+</div>
+
+      <div className="mt-8 bg-gray-900 p-6 rounded-2xl">
+  <h2 className="text-2xl font-bold mb-6">
+    📈 Weight Trend
+  </h2>
+
+  <div style={{ width: '100%', height: 300 }}>
+    <ResponsiveContainer>
+      <LineChart data={chartData}>
+        <XAxis dataKey="date" />
+        <YAxis />
+        <Tooltip />
+
+        <Line
+          type="monotone"
+          dataKey="weight"
+          stroke="#22c55e"
+          strokeWidth={3}
+        />
+      </LineChart>
+    </ResponsiveContainer>
+  </div>
+</div>
+
       <div className="mt-8 bg-gray-900 p-6 rounded-2xl">
         <h2 className="text-2xl font-bold mb-6">
           Daily Log
@@ -160,7 +242,7 @@ export default function Home() {
         </button>
       </div>
 
-      <div className="mt-10 bg-gray-900 rounded-2xl p-6">
+      <div className="mt-10">
 
   <h2 className="text-2xl font-bold mb-6">
 
@@ -178,7 +260,7 @@ export default function Home() {
 
   ) : (
 
-    <div className="space-y-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
 
       {logs.map((log) => (
 
@@ -186,7 +268,7 @@ export default function Home() {
 
           key={log.id}
 
-          className="bg-gray-800 rounded-xl p-4"
+          className="bg-gray-800 rounded-xl p-5 shadow-lg"
 
         >
 
