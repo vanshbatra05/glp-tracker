@@ -102,20 +102,30 @@ export default function Home() {
   
 
   async function fetchLogs() {
-    const { data, error } = await supabase
-      .from('daily_logs')
-      .select('*')
-      .order('created_at', {
-        ascending: false,
-      })
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
-    if (error) {
-      console.error(error)
-      return
-    }
-
-    setLogs(data || [])
+  if (!user) {
+    setLogs([])
+    return
   }
+
+  const { data, error } = await supabase
+    .from('daily_logs')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', {
+      ascending: false,
+    })
+
+  if (error) {
+    console.error(error)
+    return
+  }
+
+  setLogs(data || [])
+}
   async function saveLog() {
   if (!weight) {
     alert('Please enter weight')
@@ -164,9 +174,19 @@ export default function Home() {
 }
 
   async function fetchLastInjection() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    setLastInjection(null)
+    return
+  }
+
   const { data } = await supabase
     .from('injections')
     .select('*')
+    .eq('user_id', user.id)
     .order('injection_date', {
       ascending: false,
     })
@@ -176,7 +196,6 @@ export default function Home() {
     setLastInjection(data[0])
   }
 }
-
   async function saveInjection() {
   const {
     data: { user },
