@@ -1,6 +1,17 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase'
+
+interface DailyLog {
+  id: string
+  created_at: string
+  weight: number
+  water: number
+  steps: number
+  protein: number
+  calories: number
+}
 
 export default function Home() {
   const [weight, setWeight] = useState('')
@@ -9,33 +20,76 @@ export default function Home() {
   const [protein, setProtein] = useState('')
   const [calories, setCalories] = useState('')
 
+  const [logs, setLogs] = useState<DailyLog[]>([])
+  const [loading, setLoading] = useState(false)
+
   useEffect(() => {
-    const savedData = localStorage.getItem('dailyLog')
-
-    if (savedData) {
-      const data = JSON.parse(savedData)
-
-      setWeight(data.weight || '')
-      setWater(data.water || '')
-      setSteps(data.steps || '')
-      setProtein(data.protein || '')
-      setCalories(data.calories || '')
-    }
+    fetchLogs()
   }, [])
 
-  const saveData = () => {
-    localStorage.setItem(
-      'dailyLog',
-      JSON.stringify({
-        weight,
-        water,
-        steps,
-        protein,
-        calories,
-      })
-    )
+  async function fetchLogs() {
+    const { data, error } = await supabase
+      .from('daily_logs')
+      .select('*')
+      .order('created_at', { ascending: false })
 
-    alert('Daily Log Saved ✅')
+    if (error) {
+      console.error(error)
+      return
+    }
+
+    setLogs(data || [])
+  }
+
+  async function saveLog() {
+    if (!weight) {
+      alert('Please enter weight')
+      return
+    }
+
+    setLoading(true)
+
+    const { error } = await supabase
+      .from('daily_logs')
+      .insert({
+        weight: Number(weight),
+        water: Number(water || 0),
+        steps: Number(steps || 0),
+        protein: Number(protein || 0),
+        calories: Number(calories || 0),
+      })
+
+    setLoading(false)
+
+    if (error) {
+      alert(error.message)
+      console.error(error)
+      return
+    }
+
+    alert('Saved Successfully ✅')
+
+    setWeight('')
+    setWater('')
+    setSteps('')
+    setProtein('')
+    setCalories('')
+
+    fetchLogs()
+  }
+
+  async function deleteLog(id: string) {
+    const { error } = await supabase
+      .from('daily_logs')
+      .delete()
+      .eq('id', id)
+
+    if (error) {
+      alert(error.message)
+      return
+    }
+
+    fetchLogs()
   }
 
   return (
@@ -44,17 +98,17 @@ export default function Home() {
         GLP Tracker
       </h1>
 
-      <p className="mt-2 text-gray-400 text-xl">
-        Personal Weight Loss Dashboard
+      <p className="text-gray-400 text-xl mt-2">
+        AI Powered GLP-1 Tracker
       </p>
 
-      {/* Daily Log */}
-      <div className="mt-8 bg-gray-900 p-6 rounded-2xl max-w-4xl">
-        <h2 className="text-2xl font-semibold mb-6">
+      <div className="mt-8 bg-gray-900 p-6 rounded-2xl">
+        <h2 className="text-2xl font-bold mb-6">
           Daily Log
         </h2>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid md:grid-cols-2 gap-4">
+
           <input
             type="number"
             placeholder="Weight (kg)"
@@ -92,76 +146,80 @@ export default function Home() {
             placeholder="Calories"
             value={calories}
             onChange={(e) => setCalories(e.target.value)}
-            className="p-3 rounded-lg bg-white text-black col-span-2"
+            className="p-3 rounded-lg bg-white text-black md:col-span-2"
           />
+
         </div>
 
         <button
-          onClick={saveData}
+          onClick={saveLog}
+          disabled={loading}
           className="mt-6 bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg font-semibold"
         >
-          Save Daily Log
+          {loading ? 'Saving...' : 'Save Daily Log'}
         </button>
       </div>
 
-      {/* Dashboard Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-8">
-
-        <div className="bg-gray-900 p-5 rounded-2xl">
-          <p className="text-gray-400">Weight</p>
-          <p className="text-4xl font-bold text-green-400">
-            {weight || '--'}
-          </p>
-          <p className="text-gray-500">kg</p>
-        </div>
-
-        <div className="bg-gray-900 p-5 rounded-2xl">
-          <p className="text-gray-400">Water</p>
-          <p className="text-4xl font-bold text-blue-400">
-            {water || '--'}
-          </p>
-          <p className="text-gray-500">L</p>
-        </div>
-
-        <div className="bg-gray-900 p-5 rounded-2xl">
-          <p className="text-gray-400">Steps</p>
-          <p className="text-4xl font-bold text-yellow-400">
-            {steps || '--'}
-          </p>
-          <p className="text-gray-500">steps</p>
-        </div>
-
-        <div className="bg-gray-900 p-5 rounded-2xl">
-          <p className="text-gray-400">Protein</p>
-          <p className="text-4xl font-bold text-purple-400">
-            {protein || '--'}
-          </p>
-          <p className="text-gray-500">g</p>
-        </div>
-
-        <div className="bg-gray-900 p-5 rounded-2xl">
-          <p className="text-gray-400">Calories</p>
-          <p className="text-4xl font-bold text-red-400">
-            {calories || '--'}
-          </p>
-          <p className="text-gray-500">kcal</p>
-        </div>
-
-      </div>
-
-      {/* Goal Card */}
-      <div className="mt-8 bg-gradient-to-r from-blue-600 to-cyan-600 p-6 rounded-2xl max-w-4xl">
-        <h2 className="text-2xl font-bold">
-          Weekly Goal
+      <div className="mt-10 bg-gray-900 rounded-2xl p-6">
+        <h2 className="text-2xl font-bold mb-6">
+          History
         </h2>
 
-        <p className="mt-2 text-lg">
-          Goal Weight: 80 kg
-        </p>
+        {logs.length === 0 ? (
+          <p className="text-gray-400">
+            No Logs Yet
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
 
-        <p className="text-lg">
-          Current Weight: {weight || '--'} kg
-        </p>
+            <table className="w-full">
+
+              <thead>
+                <tr className="border-b border-gray-700">
+                  <th className="text-left py-3">Date</th>
+                  <th className="text-left py-3">Weight</th>
+                  <th className="text-left py-3">Water</th>
+                  <th className="text-left py-3">Steps</th>
+                  <th className="text-left py-3">Protein</th>
+                  <th className="text-left py-3">Calories</th>
+                  <th className="text-left py-3">Action</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {logs.map((log) => (
+                  <tr
+                    key={log.id}
+                    className="border-b border-gray-800"
+                  >
+                    <td>
+                      {new Date(
+                        log.created_at
+                      ).toLocaleDateString()}
+                    </td>
+
+                    <td>{log.weight}</td>
+                    <td>{log.water}</td>
+                    <td>{log.steps}</td>
+                    <td>{log.protein}</td>
+                    <td>{log.calories}</td>
+
+                    <td>
+                      <button
+                        onClick={() => deleteLog(log.id)}
+                        className="bg-red-600 px-3 py-1 rounded"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+
+            </table>
+
+          </div>
+        )}
       </div>
     </main>
   )
