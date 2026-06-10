@@ -31,10 +31,36 @@ export default function Home() {
   const [logs, setLogs] = useState<DailyLog[]>([])
   const [loading, setLoading] = useState(false)
 
+  const currentWeight =
+    logs.length > 0 ? logs[0].weight : 0
+
+  const startingWeight =
+    logs.length > 0
+      ? logs[logs.length - 1].weight
+      : 0
+
+  const goalWeight = 80
+
+  const remainingWeight =
+    currentWeight > 0
+      ? currentWeight - goalWeight
+      : 0
+
+  const progress =
+    startingWeight > goalWeight
+      ? ((startingWeight - currentWeight) /
+          (startingWeight - goalWeight)) *
+        100
+      : 0
+
+  const totalLogs = logs.length
+
   const chartData = [...logs]
     .reverse()
     .map((log) => ({
-      date: new Date(log.created_at).toLocaleDateString(),
+      date: new Date(
+        log.created_at
+      ).toLocaleDateString(),
       weight: log.weight,
     }))
 
@@ -46,7 +72,9 @@ export default function Home() {
     const { data, error } = await supabase
       .from('daily_logs')
       .select('*')
-      .order('created_at', { ascending: false })
+      .order('created_at', {
+        ascending: false,
+      })
 
     if (error) {
       console.error(error)
@@ -55,7 +83,6 @@ export default function Home() {
 
     setLogs(data || [])
   }
-
   async function saveLog() {
     if (!weight) {
       alert('Please enter weight')
@@ -383,6 +410,7 @@ export default function Home() {
       ))}
 
     </div>
+    
 
   )}
 
