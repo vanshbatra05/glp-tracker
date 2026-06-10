@@ -27,6 +27,7 @@ export default function Home() {
   const [steps, setSteps] = useState('')
   const [protein, setProtein] = useState('')
   const [calories, setCalories] = useState('')
+  const [goalWeight, setGoalWeight] = useState(80)
 
   const [logs, setLogs] = useState<DailyLog[]>([])
   const [loading, setLoading] = useState(false)
@@ -39,7 +40,6 @@ export default function Home() {
       ? logs[logs.length - 1].weight
       : 0
 
-  const goalWeight = 80
 
   const remainingWeight =
     currentWeight > 0
@@ -55,6 +55,15 @@ export default function Home() {
 
   const totalLogs = logs.length
 
+  const [medication, setMedication] = useState('Mounjaro')
+  const [customMedication, setCustomMedication] = useState('')
+  const [dose, setDose] = useState('5 mg')
+  const [injectionDate, setInjectionDate] = useState('')
+  const [injectionSite, setInjectionSite] = useState('Abdomen Left')
+  const [customSite, setCustomSite] = useState('')
+
+  const [lastInjection, setLastInjection] = useState<any>(null)
+
   const chartData = [...logs]
     .reverse()
     .map((log) => ({
@@ -65,8 +74,9 @@ export default function Home() {
     }))
 
   useEffect(() => {
-    fetchLogs()
-  }, [])
+  fetchLogs()
+  fetchLastInjection()
+}, [])
 
   async function fetchLogs() {
     const { data, error } = await supabase
@@ -120,6 +130,39 @@ export default function Home() {
     fetchLogs()
   }
 
+  async function fetchLastInjection() {
+  const { data } = await supabase
+    .from('injections')
+    .select('*')
+    .order('injection_date', {
+      ascending: false,
+    })
+    .limit(1)
+
+  if (data && data.length > 0) {
+    setLastInjection(data[0])
+  }
+}
+
+  async function saveInjection() {
+  const { error } = await supabase
+    .from('injections')
+    .insert({
+      medication,
+      dose,
+      injection_date: injectionDate,
+      injection_site: injectionSite,
+    })
+
+  if (error) {
+    alert(error.message)
+    return
+  }
+
+  alert('Injection Saved 💉')
+  fetchLastInjection()
+}
+
   async function deleteLog(id: string) {
     const { error } = await supabase
       .from('daily_logs')
@@ -162,7 +205,7 @@ export default function Home() {
     </p>
 
     <h3 className="text-3xl font-bold text-blue-400">
-      80 kg
+      {goalWeight} kg
     </h3>
   </div>
 
@@ -211,6 +254,21 @@ export default function Home() {
   </div>
 </div>
 
+      
+      <div className="mt-6 bg-gray-900 p-6 rounded-2xl">
+        <h2 className="text-xl font-bold mb-4">
+          Goal Weight
+        </h2>
+        <input
+          type="number"
+          value={goalWeight}
+          onChange={(e) =>
+            setGoalWeight(Number(e.target.value))
+          }
+          className="p-3 rounded-lg bg-white text-black"
+        />
+</div>
+      
       <div className="mt-8 bg-gray-900 p-6 rounded-2xl">
         <h2 className="text-2xl font-bold mb-6">
           Daily Log
@@ -269,6 +327,92 @@ export default function Home() {
         </button>
       </div>
 
+      {lastInjection && (
+  <div className="mt-8 bg-purple-900 p-6 rounded-2xl">
+    <h2 className="text-xl font-bold mb-3">
+      Last Injection
+    </h2>
+
+    <p>
+      💉 {lastInjection.medication}
+    </p>
+
+    <p>
+      Dose: {lastInjection.dose}
+    </p>
+
+    <p>
+      Site: {lastInjection.injection_site}
+    </p>
+
+    <p>
+      Date: {lastInjection.injection_date}
+    </p>
+  </div>
+)}
+
+      <div className="mt-8 bg-gray-900 p-6 rounded-2xl">
+  <h2 className="text-2xl font-bold mb-6">
+    💉 Injection Tracker
+  </h2>
+
+  <div className="grid md:grid-cols-2 gap-4">
+
+    <select
+      value={medication}
+      onChange={(e) => setMedication(e.target.value)}
+      className="p-3 rounded-lg bg-white text-black"
+    >
+      <option>Mounjaro</option>
+      <option>Ozempic</option>
+      <option>Wegovy</option>
+      <option>Zepbound</option>
+      <option>Rybelsus</option>
+    </select>
+
+    <select
+      value={dose}
+      onChange={(e) => setDose(e.target.value)}
+      className="p-3 rounded-lg bg-white text-black"
+    >
+      <option>2.5 mg</option>
+      <option>5 mg</option>
+      <option>7.5 mg</option>
+      <option>10 mg</option>
+      <option>12.5 mg</option>
+      <option>15 mg</option>
+    </select>
+
+    <input
+      type="date"
+      value={injectionDate}
+      onChange={(e) => setInjectionDate(e.target.value)}
+      className="p-3 rounded-lg bg-white text-black"
+    />
+
+    <select
+      value={injectionSite}
+      onChange={(e) => setInjectionSite(e.target.value)}
+      className="p-3 rounded-lg bg-white text-black"
+    >
+      <option>Abdomen Left</option>
+      <option>Abdomen Right</option>
+      <option>Thigh Left</option>
+      <option>Thigh Right</option>
+      <option>Arm Left</option>
+      <option>Arm Right</option>
+    </select>
+
+  </div>
+
+  <button
+    onClick={saveInjection}
+    className="mt-6 bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg font-semibold"
+  >
+    Save Injection
+  </button>
+</div>
+
       <div className="mt-10">
 
   <h2 className="text-2xl font-bold mb-6">
@@ -286,6 +430,8 @@ export default function Home() {
     </p>
 
   ) : (
+
+    
 
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
 
@@ -413,7 +559,7 @@ export default function Home() {
     
 
   )}
-
+  
 </div>
     </main>
   )
