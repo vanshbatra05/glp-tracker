@@ -95,7 +95,12 @@ export default function Home() {
   fetchLastInjection()
 
   supabase.auth.getUser().then(({ data }) => {
+    console.log("AUTH USER", data.user)
     setUser(data.user)
+
+    if (data.user) {
+      createProfileIfMissing(data.user)
+    }
   })
 }, [])
 
@@ -173,6 +178,25 @@ export default function Home() {
   })
 }
 
+  async function createProfileIfMissing(user: any) {
+  if (!user) return
+
+  const { data } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single()
+
+  if (!data) {
+    await supabase
+      .from('profiles')
+      .insert({
+        id: user.id,
+        email: user.email,
+      })
+  }
+}
+
   async function fetchLastInjection() {
   const {
     data: { user },
@@ -196,6 +220,9 @@ export default function Home() {
     setLastInjection(data[0])
   }
 }
+
+  
+
   async function saveInjection() {
   const {
     data: { user },
