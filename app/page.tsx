@@ -1,7 +1,9 @@
 'use client'
 
+import Navbar from './components/navbar'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import Link from 'next/link'
 import {
   LineChart,
   Line,
@@ -27,8 +29,7 @@ export default function Home() {
   const [steps, setSteps] = useState('')
   const [protein, setProtein] = useState('')
   const [calories, setCalories] = useState('')
-  const [goalWeight, setGoalWeight] = useState(80)
-
+  const [goalWeight, setGoalWeight] = useState<number>(80)
   const [logs, setLogs] = useState<DailyLog[]>([])
   const [loading, setLoading] = useState(false)
 
@@ -56,6 +57,7 @@ export default function Home() {
   const totalLogs = logs.length
 
   const [user, setUser] = useState<any>(null)
+  const [profile, setProfile] = useState<any>(null)
 
   const [medication, setMedication] = useState('Mounjaro')
   const [customMedication, setCustomMedication] = useState('')
@@ -93,9 +95,9 @@ export default function Home() {
   useEffect(() => {
   fetchLogs()
   fetchLastInjection()
+  fetchProfile()
 
   supabase.auth.getUser().then(({ data }) => {
-    console.log("AUTH USER", data.user)
     setUser(data.user)
 
     if (data.user) {
@@ -103,8 +105,29 @@ export default function Home() {
     }
   })
 }, [])
+ async function fetchProfile() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  
+  if (!user) return
+
+  const { data } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single()
+
+  if (data) {
+    setProfile(data)
+
+    if (data.goal_weight) {
+      setGoalWeight(Number(data.goal_weight))
+    }
+  }
+}
+
+    
 
   async function fetchLogs() {
   const {
@@ -175,9 +198,11 @@ export default function Home() {
   async function signInWithGoogle() {
   await supabase.auth.signInWithOAuth({
     provider: 'google',
+    options: {
+      redirectTo: window.location.origin,
+    },
   })
 }
-
   async function createProfileIfMissing(user: any) {
   if (!user) return
 
@@ -267,7 +292,9 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white p-8">
+  <main className="min-h-screen bg-gray-950 text-white p-8">
+    <Navbar/>
+
       {user && (
 
       <p className="mt-2 text-green-400">
@@ -284,17 +311,8 @@ export default function Home() {
     >
   Continue with Google
 </button>
-      <button
+      
 
-  onClick={logout}
-
-  className="mt-4 bg-gray-700 hover:bg-gray-800 px-4 py-2 rounded-lg"
-
->
-
-  Logout
-
-</button>
       <h1 className="text-6xl font-bold">
         GLP Tracker
       </h1>
@@ -302,6 +320,8 @@ export default function Home() {
       <p className="text-gray-400 text-xl mt-2">
         AI Powered GLP-1 Tracker
       </p>
+
+     
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
 
